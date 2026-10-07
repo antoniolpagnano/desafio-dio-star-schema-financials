@@ -1,0 +1,46 @@
+// =============================================================================
+//  DESAFIO DIO | STAR SCHEMA COM POWER BI - BASE FINANCIAL SAMPLE
+//  Tabela de datas criada em DAX
+// =============================================================================
+//  Autor...: Antonio Pagnano
+//  GitHub..: https://github.com/antoniolpagnano
+//
+//  Criada em: Modelagem > Nova tabela
+//
+//  730 linhas, de 01/01/2013 a 31/12/2014.
+//
+//  POR QUE ANOS COMPLETOS E NAO MIN/MAX DAS VENDAS
+//  -----------------------------------------------
+//  O intervalo real das vendas vai de 01/09/2013 a 01/12/2014 - 457 dias.
+//  Usar MIN e MAX diretamente produziria um calendario com 2013 comecando em
+//  setembro. Funcoes de inteligencia temporal exigem anos completos: com um
+//  2013 parcial, TOTALYTD e SAMEPERIODLASTYEAR devolvem valores errados para
+//  aquele ano, sem erro e sem aviso - apenas numeros incorretos.
+//
+//  Por isso DataInicial e o primeiro dia do ano da venda mais antiga, e
+//  DataFinal o ultimo dia do ano da venda mais recente.
+//
+//  DEPOIS DE CRIAR
+//  ---------------
+//  Selecione a tabela e va em Ferramentas de Tabela > Marcar como tabela de
+//  data, escolhendo a coluna Date. Sem essa marcacao o Power BI nao reconhece
+//  a hierarquia temporal e as funcoes de inteligencia temporal falham.
+// =============================================================================
+
+D_Calendario =
+VAR DataInicial = DATE( YEAR( MIN( F_Vendas[Date] ) ), 1, 1 )
+VAR DataFinal   = DATE( YEAR( MAX( F_Vendas[Date] ) ), 12, 31 )
+RETURN
+ADDCOLUMNS(
+    CALENDAR( DataInicial, DataFinal ),
+    "Ano",                     YEAR( [Date] ),
+    "Trimestre",               "T" & QUARTER( [Date] ),
+    "Número do Mês",           MONTH( [Date] ),
+    "Mês",                     FORMAT( [Date], "mmmm" ),
+    "Mês Abreviado",           FORMAT( [Date], "mmm" ),
+    "Mês/Ano",                 FORMAT( [Date], "mmm/yyyy" ),
+    "Dia",                     DAY( [Date] ),
+    "Dia da Semana",           FORMAT( [Date], "dddd" ),
+    "Número do Dia da Semana", WEEKDAY( [Date] ),
+    "Semana do Ano",           WEEKNUM( [Date] )
+)

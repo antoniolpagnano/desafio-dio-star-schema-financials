@@ -1,0 +1,93 @@
+// =============================================================================
+//  DESAFIO DIO | STAR SCHEMA COM POWER BI - BASE FINANCIAL SAMPLE
+//  As 14 medidas do modelo
+// =============================================================================
+//  Autor...: Antonio Pagnano
+//  GitHub..: https://github.com/antoniolpagnano
+//
+//  Todas criadas na tabela _Medidas, uma tabela vazia feita com
+//  Pagina Inicial > Inserir dados. O underline a mantem no topo do painel de
+//  campos e evita que as medidas fiquem espalhadas entre as colunas das
+//  tabelas de dados.
+//
+//  Os valores de conferencia ao lado de cada medida sao os totais sem nenhum
+//  filtro aplicado, batidos contra o arquivo de origem.
+// =============================================================================
+
+
+// -----------------------------------------------------------------------------
+//  MEDIDAS BASE
+// -----------------------------------------------------------------------------
+//  Vendas Brutas e Custo Total leem da D_Detalhes e ainda assim respondem a
+//  filtros aplicados na F_Vendas, porque a relacao 1:1 entre as duas propaga
+//  filtro nos dois sentidos.
+// -----------------------------------------------------------------------------
+
+Total de Vendas = SUM( F_Vendas[Sales] )                    // 118.726.350,26
+
+Vendas Brutas = SUM( D_Detalhes[Gross Sales] )              // 127.931.598,50
+
+Custo Total = SUM( D_Detalhes[COGS] )                       // 101.832.648,00
+
+Lucro Total = SUM( F_Vendas[Profit] )                       //  16.893.702,26
+
+Unidades Vendidas = SUM( F_Vendas[Units Sold] )             //   1.125.806
+
+Qtd de Vendas = COUNTROWS( F_Vendas )                       //         700
+
+
+// -----------------------------------------------------------------------------
+//  MEDIDAS DERIVADAS
+// -----------------------------------------------------------------------------
+//  DIVIDE no lugar do operador "/" devolve vazio quando o denominador e zero,
+//  em vez de erro. Num relatorio com segmentadores, um recorte sem vendas e
+//  questao de tempo.
+// -----------------------------------------------------------------------------
+
+// Identidade da base: vendas brutas menos liquidas equivale a soma dos
+// descontos. Confere ate os centavos contra a coluna Discounts da origem.
+Desconto Total = [Vendas Brutas] - [Total de Vendas]        //   9.205.248,24
+
+Margem de Lucro % = DIVIDE( [Lucro Total], [Total de Vendas] )        // 14,23%
+
+% de Desconto = DIVIDE( [Desconto Total], [Vendas Brutas] )           //  7,20%
+
+Ticket Médio = DIVIDE( [Total de Vendas], [Qtd de Vendas] )      // 169.609,07
+
+Preço Médio de Venda = AVERAGE( F_Vendas[Sale Price] )               // 118,43
+
+
+// -----------------------------------------------------------------------------
+//  INTELIGENCIA TEMPORAL
+// -----------------------------------------------------------------------------
+//  As tres dependem diretamente da D_Calendario com anos completos e marcada
+//  como tabela de data. Se Vendas Ano Anterior vier vazia, a marcacao nao foi
+//  feita.
+//
+//  Conferencia: numa tabela com D_Calendario[Ano] nas linhas, Total de Vendas
+//  da 26.415.255,51 em 2013 e 92.311.094,75 em 2014 - e Vendas Ano Anterior em
+//  2014 reproduz o valor de 2013.
+// -----------------------------------------------------------------------------
+
+Vendas YTD = TOTALYTD( [Total de Vendas], D_Calendario[Date] )
+
+Vendas Ano Anterior =
+CALCULATE( [Total de Vendas], SAMEPERIODLASTYEAR( D_Calendario[Date] ) )
+
+Variação vs Ano Anterior % =
+DIVIDE( [Total de Vendas] - [Vendas Ano Anterior], [Vendas Ano Anterior] )
+
+
+// -----------------------------------------------------------------------------
+//  FORMATACAO
+// -----------------------------------------------------------------------------
+//  Aplicada em Ferramentas de Medida > Formato, por medida:
+//
+//    Moeda .............. Total de Vendas, Vendas Brutas, Custo Total,
+//                         Lucro Total, Desconto Total, Ticket Medio,
+//                         Preco Medio de Venda, Vendas YTD,
+//                         Vendas Ano Anterior
+//    Porcentagem (2 c.) . Margem de Lucro %, % de Desconto,
+//                         Variacao vs Ano Anterior %
+//    Numero inteiro ..... Unidades Vendidas, Qtd de Vendas
+// -----------------------------------------------------------------------------
